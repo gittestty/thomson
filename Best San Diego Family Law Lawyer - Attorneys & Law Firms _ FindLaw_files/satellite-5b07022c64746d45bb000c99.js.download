@@ -1,0 +1,60 @@
+/* Right-Click Tracking */
+$('.directory_contact').contextmenu(function(){
+  var lid=$(this).attr('name');
+	_satellite.notify(lid,3);
+  if (typeof lid == 'undefined')
+	{
+  	s.eVar99 = 'Free Listing - Contact Right Click';
+  	//s.eVar53="cu";
+ 		// s.prop53="D=v53";
+	  //s.eVar52 = 'Free Listing';
+	  //s.prop52 = "D=v52";
+    //s.eVar55 = 'Free Listing';
+    //s.prop55 = "D=v55";
+  	s.linkTrackVars+=",eVar99";
+    s.tl(this,'o','directory contact - right click');
+	}
+  if (lid.indexOf('&lid')==0 && lid.indexOf('sub')>-1) 
+  {
+    lid=lid.substring(5,lid.length);
+    // Remove this comment to set eVar51 when ready to publish s.eVar51=lid;
+      s.eVar99=lid;
+    
+    lid=lid.split("/");
+    var clk,sub,cid='';
+    for (x=0;x<lid.length;x++)
+    {
+      if (lid[x].indexOf('clk:')==0)
+      {
+        temp=lid[x].split(':');clk=temp[1];
+      }
+      if (lid[x].indexOf('sub:')==0)
+      {
+        temp=lid[x].split(':');sub=temp[1];
+      }
+      if (lid[x].indexOf('cid:')==0)
+      {
+        temp=lid[x].split(':');cid=temp[1];
+        cid=cid+"_1"
+      }
+    }/* Tracking these in temporary variables to assess impact prior to publish.
+    s.eVar52=sub;
+    s.eVar53=clk;
+    s.eVar55=cid;
+    s.prop51="D=v51";
+    s.prop52="D=v52";
+    s.prop53="D=v53";
+    s.prop55="D=v55";
+    s.events="event17,event32";
+  	s.linkTrackVars+=",eVar51,eVar52,eVar53,prop51,prop52,prop53,prop55,eVar55,events";
+    s.linkTrackEvents="event17,event32";
+  	s.tl(this,'o','directory website - right click');
+    */
+    //Temporary variable code here (remove when ready to move fully to prod):
+    s.events="event99";
+  	s.linkTrackVars+=",eVar99,events";
+    s.linkTrackEvents="event99";
+  	s.tl(this,'o','directory contact - right click');
+    //end temporary code
+	}
+});

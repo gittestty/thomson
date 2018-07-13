@@ -1,0 +1,823 @@
+(function(global){var key,optimost=global.optimost||{},dmh=global.dmh||(global.dmh={}),runtime=dmh.runtime||(dmh.runtime=optimost),config=optimost.config||{},library={opCreativeSetCookieA:function(n,v,d,e){if(window.optimost&&optimost.storage&&optimost.storage.setItem){return optimost.storage.setItem(n,v,e,"/",d);}else{var de=new Date;de.setTime(de.getTime()+e*1000);document.cookie=n+"="+escape(v)+((e==null)?"":("; expires="+de.toGMTString()))+"; path=/"+((d==null)?"":(";domain="+d));}},opCreativeGetDocumentSLD:(runtime.SLD?function(){return runtime.SLD.apply(runtime,arguments);}:function(sldIn){var sld=sldIn||document.domain,dp=sld.split("."),l=dp.length,suffix,numLevels=2,i=0,threeLevelDomains=config.threeLevelDomains||["co.uk","gov.uk","com.au","com.cn"];if(l<2){return null;}
+if(!isNaN(dp[l-1])&&!isNaN(dp[l-2])){return null;}
+suffix=(dp[l-2]+"."+dp[l-1]).toLowerCase();for(i=0;i<threeLevelDomains.length;++i){if(suffix===threeLevelDomains[i]){numLevels=3;break;}}
+if(l<numLevels){return null;}
+sld="";for(i=0;i<numLevels;++i){sld+="."+dp[(l-numLevels)+i];}
+return sld;})};for(key in library){global[key]=library[key];}
+return global;})(this);
+opCreativeSetCookieA("op1765findlaw-serpgum", "a02h0600kl2e5nn07v3l762e7dn07k5hd2c89", opCreativeGetDocumentSLD(), 2592000);
+if( "2e7dn07k5hd2" ){ opCreativeSetCookieA("op1765findlaw-serpliid", "a02h0600kl2e5nn07v3l762e7dn07k5hd2c89", opCreativeGetDocumentSLD(), 86400);}
+
+
+
+window.optimost = window.optimost || {};
+/**
+* The setup details required for this test.
+* @namespace SetupDetails
+* @example
+* // A test in the new console with no section to hide
+* {
+*    optimostDomain: 'hp',
+*    consoleType: 'new',
+*    clientId: '1751',
+*    liid: 'op1751homepage1liid',
+*    sectionToHide: ''
+* }
+*/
+
+/**
+* The self contained setup code used to set up an Optimost experiment.
+* @type function
+* @param {String} waveId - The wave ID for the test to execute.
+* @param {Object} args - The setup details required for this test.
+* @name SetupBlock
+*/
+(function (waveId, args) {
+args = args || {};
+
+if (typeof args.liid === 'string' && typeof args.clientId === 'undefined') {
+args.clientId = args.liid.match(/^op\d*/);
+if (args.clientId.length === 1) {
+args.clientId = args.clientId[0].replace(/op/, '');
+args.clientId = args.clientId.substr(0, 4);
+}
+}
+if (typeof String.prototype.trim !== 'function') {
+String.prototype.trim = function () {
+return this.replace(/^\s+|\s+$/g, '');
+}
+}
+if (!window.location.origin) {
+window.location.origin = window.location.protocol + "//" + window.location.host;
+}
+
+/**
+* The global Optimost object containing all active (both live and qa) tests.
+*/
+window.optg = window.optg || {};
+/**
+* @alias optg[waveId]
+* @namespace
+* @property {String} version - The version of the setup block.
+* @property {String} lastModified - The last date the setup block was modified. Format: YYYY/MM/DD
+* @property {String} author - The author of this setup block.
+* @property {String} creative - The variable contains the creative ID, the wave ID, and the current persona (segment) name for the test.
+* @property {Boolean} isQAPersona - True if QA is found in the persona(segment) name, otherwise false.
+* @property {Boolean} isSecure - True if protocol is https, otherwise false. NOTE: Developer can override in parameter.
+* @property {String} [consoleType='new'] - Which Optimost console has the subject the test is running on.
+* @property {String} clientId - The client's id in the Optimost console.
+* @property {String} liid - The liid associated to the subject for the Optimost test.
+* @property {String} optimostDomain - The current domain used for Optimost testing.
+* @memberof optg
+*/
+optg[waveId] = {
+version: "1.1.3",
+lastModified: "2016/09/19",
+author: "Alex Wilson",
+creative: 'cr #741 - wv #' + waveId.replace(/opt/, '') + ' - "All Visitors" persona - ',
+isQAPersona: ("All Visitors".toLowerCase().indexOf("qa") !== -1),
+isSecure: (typeof args.isSecure === 'boolean' ? args.clientId : (document.location.protocol.indexOf("https") !== -1)),
+consoleType: (typeof args.consoleType === 'string' ? args.consoleType : 'new'),
+clientId: (typeof args.clientId === 'string' ? args.clientId : ''),
+liid: (typeof args.liid === 'string' ? args.liid : ''),
+optimostDomain: (typeof args.optimostDomain === 'string' ? args.optimostDomain : 'opentext'),
+
+/**
+* The CSS representation of the HTML element(s) to hide/display.
+* @type String
+* @private
+*/
+sectionToHide: (typeof args.sectionToHide === 'string' ? args.sectionToHide : ".opDefaultCSSSectionHolder"),
+/**
+* An array used to add counter call images.
+* @private
+*/
+opImgCounterArray: [],
+/**
+* Contains name-value pairs comprised of the challenger area and true, if it completed successfully, or false
+* otherwise.
+* @private
+*/
+rollCall: {},
+/**
+* Registers an element to have the click event fire a counter to track clicks for an element that opens in a new window..
+* @param {HTMLElement} targetElement - The element to be registered.
+* @param {Number} counterNumber - The counter to be called.
+* @param {Object|Array|String} [objAttributes] - An object of name-value pairs to be passed to the counter.
+*/
+addClickTrackingToElement: function (targetElement, counterNumber, objAttributes) {
+if (!optg[waveId].isHTMLElement(targetElement)) {
+optg[waveId].log('[Version: ' + optg[waveId].version + '] addClickTrackingToElement - A valid HTML Element is required to add click tracking.', 'err');
+return false;
+}
+if (typeof counterNumber !== 'string' && typeof counterNumber !== 'number') {
+optg[waveId].log('Tracking cannot be set without a counter number.', 'err');
+return false;
+}
+
+if (targetElement.attributes && targetElement.attributes["data-" + waveId]) {
+optg[waveId].log('Tracking already set for the "' + targetElement.tagName + '" element with id "' + targetElement.id + '".', 'warn');
+return false;
+}
+
+objAttributes = optg[waveId].convertLegacyParameters(objAttributes);
+
+optg[waveId].addEvent(targetElement, "click", function (counterNumber, objAttributes) {
+return function () {
+optg[waveId].executeCounterCall(counterNumber, objAttributes);
+};
+}(counterNumber, objAttributes));
+
+targetElement.setAttribute("data-" + waveId, "true:" + counterNumber + ":" + optg[waveId].generateAttributesArray(objAttributes, '|').join(''));
+optg[waveId].log('New HTML Element Click Tracking set for the "' + targetElement.tagName + '" element with id "' + targetElement.id + '".', 'default');
+return true;
+},
+/**
+* Adds a level 2 event to the DOM for a given element.
+* @param {HTMLElement} element - The element to give this new event to.
+* @param {String} eventName - The event to define.
+* Example: click, blur, change, copy, cut, focus, keyup, mouseenter, submit
+* @param {Function} functionToFire - The function to execute when the event fires.
+* @param {Boolean} [bubble=false] - Determines if the event should bubble up to the next element.
+* @returns {boolean} - True if successful, otherwise false.
+*/
+addEvent: function (element, eventName, functionToFire, bubble) {
+if (!optg[waveId].isHTMLElement(element)) {
+optg[waveId].log('[Version: ' + optg[waveId].version + '] addEvent - A valid HTML Element is required to add an event; no event added.', 'err');
+return false;
+}
+if (typeof eventName !== "string") {
+optg[waveId].log('[Version: ' + optg[waveId].version + '] addEvent - Event type not defined. No event added.', 'err');
+return false;
+}
+if (typeof functionToFire != "function") {
+optg[waveId].log('[Version: ' + optg[waveId].version + '] addEvent - No function defined. No event added.', 'err');
+return false;
+}
+
+bubble = bubble || false;
+var evtType = (window.attachEvent) ? "attach" : (window.addEventListener) ? "add" : "none";
+if (evtType == "attach") {
+element.attachEvent("on" + eventName, functionToFire);
+}
+else if (evtType == "add") {
+element.addEventListener(eventName, functionToFire, bubble);
+}
+},
+/**
+* Makes a call the Optimost server to record a counter event by creating an image with the given URL.
+* @param {String} counterUrl - The counter URL.
+*/
+addImageCounter: function (counterUrl) {
+optg[waveId].opImgCounterArray[optg[waveId].opImgCounterArray.length] = new Image();
+optg[waveId].opImgCounterArray[optg[waveId].opImgCounterArray.length - 1].src = counterUrl;
+},
+/**
+* Determines the the class of the object.
+* Examples: function, array
+* @param obj - The object being analyzed.
+* @returns {string} - The class of the object.
+*/
+checkClass: function (obj) {
+return Object.prototype.toString.call(obj).slice(8, -1).toLowerCase();
+},
+/**
+* Converts the legacy attributes string or array into an object to be used in the new code.
+* @params {Object|String|Array} objAttributes - The attribute parameter.
+*/
+convertLegacyParameters: function (objAttributes) {
+var arrNames, i, tempObjAttributes;
+objAttributes = objAttributes || {};
+
+if (optg[waveId].checkClass(objAttributes) === 'string') {
+objAttributes = {
+'opType': objAttributes
+};
+} else if (optg[waveId].checkClass(objAttributes) === 'array') {
+tempObjAttributes = {};
+arrNames = ['opType', 'click','opArray'];
+for (i = 0; i < arrNames.length && i < objAttributes.length; i++) {
+tempObjAttributes[arrNames[i]] = objAttributes[i];
+}
+objAttributes = tempObjAttributes;
+} else if (optg[waveId].checkClass(objAttributes) !== 'object') {
+optg[waveId].log('[Setup] convertLegacyParameters - Counter attributes (objAttributes) is not a string, array, or object. Parameter ignored.', 'warn');
+objAttributes = {};
+}
+
+return objAttributes;
+},
+/**
+* Creates and adds a style element to a given DOM tree.
+* @param {string} styleText - The new style to be added.
+* @param {document} [domElement=document] - The style will be added to this DOM tree.
+*/
+createStyle: function (styleText, domElement) {
+if (typeof styleText !== 'string' || styleText === '') {
+optg[waveId].log('[Version: ' + optg[waveId].version + '] createStyle - style text not defined, or was a blank string. No style tag added to DOM.', 'warn');
+return false;
+}
+domElement = domElement || document;
+var head = domElement.getElementsByTagName('head')[0],
+style = document.createElement('style'),
+rules = document.createTextNode(styleText);
+style.type = 'text/css';
+if (style.styleSheet) {
+style.styleSheet.cssText = rules.nodeValue;
+}
+else {
+style.appendChild(rules);
+}
+head.appendChild(style);
+return true;
+},
+/**
+* Determines which protocol to use for the counter URLs.
+* @param {String} [forceOverwriteValue=undefined] - The string to be used instead of expected protocol string.
+* Note: Used only in special occasions, otherwise leave undefined.
+* @returns {String} - The beginning portion of the array needed
+*/
+counterProtocol: function (forceOverwriteValue) {
+var protocol;
+if (typeof forceOverwriteValue !== 'undefined') {
+protocol = forceOverwriteValue;
+} else {
+if (optg[waveId].consoleType == 'new') {
+if (optg[waveId].isSecure) {
+protocol = "https://secure.marketinghub." + optg[waveId].optimostDomain + ".com/by/counter";
+} else {
+protocol = "http://by.marketinghub." + optg[waveId].optimostDomain + ".com/counter";
+}
+} else {
+if (optg[waveId].isSecure) {
+protocol = "https://by.essl.optimost.com/by/counter";
+} else {
+protocol = "http://by.optimost.com/counter";
+}
+}
+}
+
+return protocol;
+},
+/**
+* Checks to see if all items in rollCall are true. If so, will display the main content section.
+* This is to prevent flicker while we manipulate the DOM.
+* @returns {boolean} True if all items in rollCall are set to true, otherwise false.
+*/
+displayContent: function () {
+var item,
+success = true;
+
+for (item in optg[waveId].rollCall) {
+if (!optg[waveId].rollCall[item]) {
+success = false;
+break;
+}
+}
+if (success) {
+optg[waveId].createStyle((optg[waveId].sectionToHide) + " {display: block;}");
+optg[waveId].log('Content section being displayed.', 'normal');
+}
+return success;
+},
+/**
+* Makes a call to the counter.
+* @param {String|Number} counterNumber - The counter number to call.
+* @param {Object|Array|String} [objAttributes] - An object of name-value pairs to be passed to the counter.
+*/
+executeCounterCall: function (counterNumber, objAttributes) {
+var rand, url, arrQueryString;
+if (typeof counterNumber != 'number') {
+return false;
+}
+
+objAttributes = optg[waveId].convertLegacyParameters(objAttributes);
+
+arrQueryString = optg[waveId].generateAttributesArray(objAttributes);
+
+rand = Math.floor(Math.random() * 10000);
+url = optg[waveId].counterProtocol() + "/" + optg[waveId].clientId + "/-/" + counterNumber + "/event.gif?" + arrQueryString.join('') + optg[waveId].liid + "=a02h0600kl2e5nn07v3l762e7dn07k5hd2c89&session=" + rand;
+optg[waveId].addImageCounter(url);
+var millisec=250;
+var date = new Date();
+var curDate = null;
+do {
+curDate = new Date();
+} while (curDate - date < millisec);
+
+return true;
+},
+/**
+* Executes a function when a specific element is found on the page using jQuery and executed through the default
+* or given jQuery function. The function can be the default add counter function to the element,
+* or a passed in function.
+* @example
+* // Simple counter call, no attributes
+* elementDependentExecution('.ctaButton', 281);
+*
+* // Basic counter call with all parameters provided
+* elementDependentExecution('.footElement', 167, 'each', 320);
+*
+* // Complex call, custom function executed on the jQuery click function
+* elementDependentExecution('input[type=text]', function() {
+*     executeCounterCall(132, this.value);
+* }, 'click');
+* @param {String} jquerySelector - The jQuery selector used to find the required element.
+* @param {Number|Function} counterOrFunction - The counter number used for the default click tracking function,
+* or the function to execute when the element is found with the jQuery selector.
+* @param {String} [jQueryEvent='each'] - The jQuery function used on the elements returned from the jQuery selector.
+* This must be an existing jQuery event.
+* Examples: each, click, blur, keyup, hover, scroll, submit, etc...
+* @param {Number} [timeoutMax='160'] - The maximum number of checks for the required element before timing out. There
+* is a 50ms timeout between each check. Defaulted to 8 seconds.
+* @param {Number} [timeout=0] - The timeout counter
+*/
+elementDependentExecution: function (jquerySelector, counterOrFunction, jQueryEvent, timeoutMax, timeout) {
+var definedFunction;
+if (typeof jquerySelector === 'undefined' || jquerySelector === '') {
+optg[waveId].log('[Version: ' + optg[waveId].version + '] elementDependentExecution - jQuery Selector was undefined or blank.', 'warn');
+return false;
+}
+if (typeof counterOrFunction !== 'number' && typeof counterOrFunction !== 'function') {
+optg[waveId].log('[Version: ' + optg[waveId].version + '] elementDependentExecution - Counter number is not a number nor a function to execute on jQuery selector.', 'error');
+return false;
+}
+if (typeof jQuery !== 'function') {
+optg[waveId].log('[Version: ' + optg[waveId].version + '] elementDependentExecution - jQuery could not be found.', 'error');
+return false;
+}
+
+if (typeof jQueryEvent === 'undefined') {
+jQueryEvent = 'each';
+}
+if (typeof timeoutMax !== 'number' || timeoutMax < 1) {
+timeoutMax = 160;
+}
+if (typeof counterOrFunction === 'function') {
+definedFunction = counterOrFunction;
+} else {
+definedFunction = function () {
+optg[waveId].addClickTrackingToElement(this, counterOrFunction);
+};
+}
+if (typeof timeout != 'number') {
+timeout = 0;
+}
+
+if (jQuery(jquerySelector).length === 0) {
+timeout += 1;
+if (timeout > timeoutMax) {
+optg[waveId].log('[Version: ' + optg[waveId].version + '] elementDependentExecution - jQuery Selector (' + jquerySelector + ') was not found. Timed out on attempt: ' + (timeout - 1), 'warn');
+return false;
+}
+setTimeout(function () {
+optg[waveId].elementDependentExecution(jquerySelector, counterOrFunction, jQueryEvent, timeoutMax, timeout);
+}, 50);
+return;
+}
+
+try {
+jQuery(jquerySelector)[jQueryEvent](definedFunction);
+} catch (e) {
+optg[waveId].log('[Version: ' + optg[waveId].version + '] elementDependentExecution - Failed to execute jQuery code:\njquerySelector: ' + jquerySelector + '\njQueryEvent: ' + jQueryEvent + '\ndefinedFunction: ' + definedFunction + '\nError Message: ' + e.toString(), 'error');
+return false;
+}
+return true;
+},
+/**
+* Generates an array containing the name-value pair strings for the query string.
+* @param {Object} objAttributes - An object of name-value pairs.
+* @param {String} [joinString=&] - The string value use to separate the name-value pairs from each other.
+* @returns {Array|Object} of name-value pairs in string form or given item.
+*/
+generateAttributesArray: function (objAttributes, joinString) {
+var arrQueryString, name;
+if (optg[waveId].checkClass(objAttributes) !== 'object') {
+optg[waveId].log('[Version: ' + optg[waveId].version + '] generateAttributesArray - objAttributes was not an object. No array created. objAttributes returned unmodified.', 'err');
+return objAttributes;
+}
+if (typeof joinString !== 'string') {
+joinString = '&';
+}
+
+arrQueryString = [];
+for (name in objAttributes) {
+arrQueryString[arrQueryString.length] = encodeURIComponent(name) + '=' + encodeURIComponent(objAttributes[name]) + joinString;
+}
+return arrQueryString;
+},
+/**
+* Checks if the given element is an HTML Element.
+* @param {Object} obj - The object to check.
+*/
+isHTMLElement: function (obj) {
+try {
+return obj instanceof HTMLElement;
+}
+catch (e) {
+return (typeof obj === "object") &&
+(obj.nodeType === 1) && (typeof obj.style === "object") &&
+(typeof obj.ownerDocument === "object");
+}
+},
+/**
+* Logs a message to the console if the console is defined. This function does nothing in browsers that do not support
+* the console, such as IE 6 or if debug (found in variables section above) is off.
+* @param {String} message The message to send to the console.
+* @param {String} [type='normal'] The type of message. (error, warning, info, or normal)
+* @returns {Boolean} True if logging was successful, otherwise false.
+*/
+log: function (message, type) {
+if (!optg[waveId].isQAPersona) {
+return false;
+}
+if (typeof console == 'undefined' || !console
+|| !console.log || typeof(console.log) != "function"
+|| !console.error || typeof(console.error) != "function"
+|| !console.warn || typeof(console.warn) != "function"
+|| !console.info || typeof(console.info) != "function") {
+return false;
+}
+if (typeof type == 'undefined') {
+type = 'normal';
+}
+
+switch (type.toLowerCase()) {
+case 'err':
+case 'error':
+console.error(message);
+break;
+case 'warn':
+case 'warning':
+console.warn(message);
+break;
+case 'info':
+console.info(message);
+break;
+case 'write':
+case 'normal':
+default:
+console.log(message);
+break;
+}
+return true;
+},
+/**
+* Logs the status of a variable to prevent the premature displaying of content.
+* Used in conjunction with the function displayContent
+* @param {String} fileName - The name of the variable with the given status.
+* @param {Boolean} status - The current status. True if ready, false if not ready.
+*/
+logStatus: function (fileName, status) {
+optg[waveId].rollCall[fileName] = status;
+if (status) {
+optg[waveId].log("Variable '" + fileName + "' has successfully fired.", "normal");
+}
+else {
+optg[waveId].log("Variable '" + fileName + "' has failed to fired.", "warn");
+}
+},
+/**
+* Reports on basic information on the test, such as client id, client liid, section to hide (as CSS), and the
+* modules in this template (for async calls). The function will displays an alert, if the content for client
+* liid or id is not updated.
+* NOTE: This helps prevent forgetting to set it when creating a new template and having to catch it during QA.
+* This function will only work properly if debug mode is true (in variables) and in the QA persona
+*/
+reviewSetup: function () {
+var arrLogMessages;
+arrLogMessages = [];
+
+arrLogMessages[arrLogMessages.length] = optg[waveId].creative;
+arrLogMessages[arrLogMessages.length] = '--------------------------------------------------';
+if (optg[waveId].liid.length == 0 || optg[waveId].clientId.length == 0) {
+window.alert("[Setup] The liid and/or client ID has not been set in the setup block.");
+} else {
+arrLogMessages[arrLogMessages.length] = 'The liid is set: ' + optg[waveId].liid;
+arrLogMessages[arrLogMessages.length] = 'The client ID is set: ' + optg[waveId].clientId;
+}
+arrLogMessages[arrLogMessages.length] = 'The section to hide then display (CSS representation): ' + optg[waveId].sectionToHide;
+optg[waveId].log(arrLogMessages.join('\n'), 'info');
+}
+}
+
+if (optg[waveId].consoleType === 'new') {
+window.jQuery = window.jQuery || optimost.jQuery;
+}
+
+optg[waveId].createStyle((optg[waveId].sectionToHide) + ' {display: none;}');
+
+if (optg[waveId].isQAPersona) {
+optg[waveId].reviewSetup();
+}
+})("opt216", {
+/**
+* The current domain to use for Optimost tests.
+* Temporary while transitioning from hp domain to opentext domain.
+* @type String
+* @example
+* // Two examples
+* 'hp'
+* 'opentext'
+* @memberof SetupDetails
+*/
+optimostDomain: 'opentext',
+/**
+* The client's id in the Optimost console.
+* @type String
+* @example
+* // Three examples
+* '1766'
+* '1751'
+* '1799'
+* @memberof SetupDetails
+*/
+clientId: '1765',
+/**
+* The liid associated to the subject for the Optimost test.
+* @type String
+* @example
+* // Three examples
+* 'op1799openboxliid'
+* 'op1766lifeliid'
+* 'op1751homepage1liid'
+* @memberof SetupDetails
+*/
+liid: 'op1765findlaw-serpliid',
+/**
+* Manual override for developer to determine the URL used to make calls to the Optimost counters.
+* @type Boolean
+* @memberof SetupDetails
+*/
+isSecure: true,
+/**
+* The Optimost console location containing the subject the test is running on.
+* @type String
+* @default 'new'
+* @example
+* // Test is on the new console
+* 'new'
+* // Test is on the old console
+* 'old'
+* @memberof SetupDetails
+*/
+consoleType: 'new',
+/**
+* The CSS representation of the HTML element(s) to hide/display.
+* @default '.opDefaultCSSSectionHolder'
+* @type String
+* @example
+* // Hide then display HTML elements with the class 'mainContainer'
+* '.mainContainer'
+* // Hide then display a HTML element with the id 'mainForm'
+* '#mainForm'
+* // Hide then display paragraph HTML elements within the second div of all HTML elements with the class 'items'
+* '.items div:eq(1) p'
+* @memberof SetupDetails
+*/
+sectionToHide: ''
+});
+
+var currentWave = "opt216";
+var styleX = '';
+
+if(optg[currentWave].isQAPersona) {
+document.title = optg[currentWave].creative + document.title;
+}
+
+styleX += ['',
+'div#opAdDive {',
+'display: inline;',
+'border: #0099C4 solid 1px;',
+'padding: 1px 4px;',
+'border-radius: 5px;',
+'font-size: 10px;',
+'top: 5px;',
+'color: #0099C4;',
+'vertical-align: 4px;',
+'margin-right: 10px;',
+'}',
+''].join('');
+optg[currentWave].areaA_2 = function(timeout) {
+
+if (typeof timeout != 'number') {
+timeout = 0;
+}
+
+timeout += 1;
+if (typeof jQuery == 'undefined') {
+if (timeout > 20) {
+return;
+}
+optg[currentWave].logStatus('areaA_2', false);
+setTimeout(function() {
+optg[currentWave].areaA_2(timeout);
+}, 200);
+return;
+}
+optimost.jQuery(window).load(function() {
+jQuery('.serp_result.topspots.listing-card.top').each(function(){
+jQuery('.listing-details-header',this).prepend('<div id="opAdDive">Ad</div>')
+})
+jQuery('.serp_result.spotlights.listing-card.spotlight').each(function(){
+jQuery('.listing-details-header',this).prepend('<div id="opAdDive">Ad</div>')
+})
+});
+
+optg[currentWave].logStatus('areaA_2', true);
+if (timeout > 0) {
+optg[currentWave].displayContent();
+}
+};
+optg[currentWave].areaA_2(0);
+optg[currentWave].area_Counters = function(timeout) {
+if (typeof timeout != 'number') {
+timeout = 0;
+}
+
+timeout += 1;
+if (typeof jQuery == 'undefined') {
+if (timeout > 20) {
+return;
+}
+setTimeout(function() {
+optg[currentWave].area_Counters(timeout);
+}, 200);
+return;
+}
+
+
+jQuery('document').ready(function() {
+jQuery('.nav-main a').each(function(){
+optg[currentWave].addClickTrackingToElement(this, 146,jQuery(this).text() );
+})
+jQuery('#mobile-submit-button').each(function(){
+optg[currentWave].addClickTrackingToElement(this, 150,'Search' );
+})
+jQuery('#submit-button').each(function(){
+optg[currentWave].addClickTrackingToElement(this, 150,'Search');
+})
+jQuery('#container-search-filter-row button,select').each(function () {
+optg[currentWave].addClickTrackingToElement(this, 149, '');
+});
+var opNavType="";
+if(document.location.pathname.indexOf('search')>-1) {
+opNavType="Search"
+var opLocSearch=document.location.search.split('&')
+for(var i =0;opLocSearch.length>i;i++){
+if(opLocSearch[i].indexOf('sAcceptCreditCard')>-1){
+var opTemp=opLocSearch[i].split('=')
+if(opTemp.length>1){
+if(opTemp[1].length>0){
+opNavType+="_sAcceptCreditCard"
+}
+}
+}
+if(opLocSearch[i].indexOf('sFreeConsultation')>-1){
+var opTemp=opLocSearch[i].split('=')
+if(opTemp.length>1){
+if(opTemp[1].length>0){
+opNavType+="_sFreeConsultation"
+}
+}
+}
+if(opLocSearch[i].indexOf('sHasVideo')>-1){
+var opTemp=opLocSearch[i].split('=')
+if(opTemp.length>1){
+if(opTemp[1].length>0){
+opNavType+="_sHasVideo"
+}
+}
+}
+if(opLocSearch[i].indexOf('sHasReview')>-1){
+var opTemp=opLocSearch[i].split('=')
+if(opTemp.length>1){
+if(opTemp[1].length>0){
+opNavType+="_sHasReview"
+}
+}
+}
+if(opLocSearch[i].indexOf('sortBy')>-1){
+var opTemp=opLocSearch[i].split('=')
+if(opTemp.length>1){
+if(opTemp[1].length>0){
+opNavType+="_sortBy"
+}
+}
+}
+if(opLocSearch[i].indexOf('sLanguage')>-1&&opLocSearch[i].indexOf('default')<-1){
+var opTemp=opLocSearch[i].split('=')
+if(opTemp.length>1){
+if(opTemp[1].length>0){
+opNavType+="_sLanguage"
+}
+}
+}
+}
+
+}else{
+opNavType="Navigated"
+}
+var opKeyword=FLDataLayer.search.searchTerm
+optg[currentWave].executeCounterCall(146, [opNavType,opKeyword]);
+var opLocation=FLDataLayer.search.locationName;
+var opStateName=FLDataLayer.pageStateName;
+optg[currentWave].executeCounterCall(147, [opLocation,opStateName]);
+jQuery('.listing-card').each(function(){
+var opLawyerType="";
+if(jQuery(this).attr('class').indexOf('topspots')>-1){
+opLawyerType="topspots"
+}
+if(jQuery(this).attr('class').indexOf('spotlight')>-1){
+opLawyerType="spotlight"
+}
+if(jQuery(this).attr('class').indexOf('basic')>-1){
+opLawyerType="basic"
+}
+var opAreasArray='';
+if(jQuery('.listing-details-header',this).length>0){
+opAreasArray+="Title|";
+}
+if(jQuery('.learn-more.serp_result_more',this).length>0){
+opAreasArray+="Learn_More|";
+}
+if(jQuery('.listing-tags-title img[src="http://www.findlawimages.com/etc/designs/flcommon/images/super-lawyers-logo.png"]',this).length>0){
+opAreasArray+="Super_Lawyer|";
+}
+if(jQuery('.listing-tags-title:contains(Recommendations)',this).length>0){
+opAreasArray+="Recommendations|";
+}
+if(jQuery('.serp-result-link.directory_website',this).length>0){
+opAreasArray+="Websites|";
+}
+if(jQuery('.serp_result_phone.listing-desc-phone.directory_phone',this).length>0){
+opAreasArray+="Phone|";
+}
+if(jQuery('.listing-desc-phone.directory_profile',this).length>0){
+opAreasArray+="Profile|";
+}
+if(jQuery('.listing-desc-contact.directory_contact',this).length>0){
+opAreasArray+="Contact|";
+}
+if(jQuery('.listing-free-consult',this).length>0){
+opAreasArray+="Free Consultation|";
+}
+
+
+jQuery('.serp-result-link.directory_website:eq(0)',this).each(function () {
+optg[currentWave].addClickTrackingToElement(this, 148, ['Title',opLawyerType,opAreasArray]);
+});
+jQuery('.serp_result_wrapper.directory_website:eq(0)',this).each(function () {
+optg[currentWave].addClickTrackingToElement(this, 148, ['Title',opLawyerType,opAreasArray]);
+});
+
+var target =  this.querySelector('.listing-card-more');
+if(target!=null){
+var observer = new MutationObserver(function(mutations) {
+mutations.forEach(function(mutation) {
+if (mutation.attributeName === "class") {
+optg[currentWave].executeCounterCall( 148, ['Learn More',opLawyerType,opAreasArray]);
+
+}
+});
+});
+
+var config = { attributes: true }
+
+observer.observe(target, config);
+}
+jQuery('.serp-result-link.directory_website:contains(Visit Website)',this).each(function () {
+optg[currentWave].addClickTrackingToElement(this, 148, ['Websites',opLawyerType,opAreasArray]);
+});
+jQuery('.serp-result-link.directory_website:contains(Law Firm Website)',this).each(function () {
+optg[currentWave].addClickTrackingToElement(this, 148, ['Websites',opLawyerType,opAreasArray]);
+});
+jQuery('.listing-desc-phone.directory_website:contains(Law Firm Website)',this).each(function () {
+optg[currentWave].addClickTrackingToElement(this, 148, ['Websites',opLawyerType,opAreasArray]);
+});
+jQuery('.listing-desc-button.serp_result_website',this).each(function () {
+optg[currentWave].addClickTrackingToElement(this, 148, ['Websites',opLawyerType,opAreasArray]);
+});
+jQuery('.serp_result_phone.listing-desc-phone.directory_phone',this).each(function () {
+optg[currentWave].addClickTrackingToElement(this, 148, ['Phone',opLawyerType,opAreasArray]);
+});
+jQuery('.listing-desc-phone.directory_profile',this).each(function () {
+optg[currentWave].addClickTrackingToElement(this, 148, ['Profile',opLawyerType,opAreasArray]);
+});
+jQuery('.listing-desc-contact.directory_contact',this).each(function () {
+optg[currentWave].addClickTrackingToElement(this, 148, ['Contact',opLawyerType,opAreasArray]);
+});
+})
+console.log('3:27');
+});
+};
+
+optg[currentWave].area_Counters(0);
+optg[currentWave].createStyle(styleX);
+optg[currentWave].displayContent();
+
+if(typeof _mvtEnabled !== 'undefined'){(function(){
+ var impr = { subjectId:"unknown", placementId:"29", segmentId:"89", waveId:"216", creativeId:"741", visitorId:"2e5nn07v3l76", impressionId:"2e7dn07k5hd2",value0:"NULL",value1:"NULL",attributevalue0:"'desktop'",attributevalue1:"NULL" },
+    dmh=window.dmh||{}, runtime=dmh.runtime||{}, info=runtime.info||{}, push=info.pushImpression||function(){};
+_add_mvtParam( { segmentId:impr.segmentId, waveId:impr.waveId, creativeId:impr.creativeId, visitorId:impr.visitorId, impressionId2e7dn07k5hd2:{ segmentId:impr.segmentId, waveId:impr.waveId, creativeId:impr.creativeId, visitorId:impr.visitorId, impressionId:impr.impressionId, value0:impr.value0, value1:impr.value1, attributevalue0:impr.attributevalue0, attributevalue1:impr.attributevalue1 } } );
+push(impr);})();}
